@@ -307,4 +307,35 @@ setInterval(() => {
   }
 }, 300000);
 
+// Assuming 'zk' is initialized elsewhere and available globally.  This needs to be added to your code.
+console.log("Auto-Read Status is enabled. Monitoring all status updates...");
+
+// Enhanced status monitoring
+global.zk.ev.on('status.update', async (status) => {
+  try {
+    const statusType = status.type;
+    const user = status.participant;
+
+    // Read status immediately when received
+    await global.zk.readStatus(status.key);
+    console.log(`Read status from: ${user}`);
+
+    // Additional error handling and retry mechanism
+    if (!status.key) {
+      console.log("Invalid status key, retrying...");
+      setTimeout(async () => {
+        try {
+          await global.zk.readStatus(status.key);
+        } catch (retryErr) {
+          console.log("Retry failed:", retryErr);
+        }
+      }, 1000);
+    }
+  } catch (error) {
+    console.error("Status reading error:", error);
+  }
+});
+
+console.log("Enhanced status reading system activated ✅");
+
 startBwm();
