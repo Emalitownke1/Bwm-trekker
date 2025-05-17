@@ -308,3 +308,58 @@ setInterval(() => {
 }, 300000);
 
 startBwm();
+
+// Status monitoring with queue system
+if (global.xmd) {
+  console.log("Enhanced Auto-Read Status is enabled. Monitoring all status updates...");
+  
+  // Queue to handle multiple status updates
+  let statusQueue = [];
+  let isProcessing = false;
+
+  // Process status queue
+  async function processStatusQueue() {
+    if (isProcessing || statusQueue.length === 0) return;
+    
+    isProcessing = true;
+    while (statusQueue.length > 0) {
+      const status = statusQueue.shift();
+      try {
+        if (status.key) {
+          await global.xmd.readStatus(status.key);
+          console.log(`Read status from: ${status.participant || 'unknown'}`);
+        }
+      } catch (error) {
+        console.error(`Failed to read status: ${error.message}`);
+        // Re-queue failed attempts with a limit
+        if (!status.retries || status.retries < 3) {
+          status.retries = (status.retries || 0) + 1;
+          statusQueue.push(status);
+        }
+      }
+      // Small delay between processing each status
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+    isProcessing = false;
+  }
+
+  global.xmd.ev.on('status.update', async (status) => {
+    try {
+      // Add new status to queue
+      statusQueue.push(status);
+      // Start processing if not already processing
+      processStatusQueue();
+    } catch (error) {
+      console.error("Status queue error:", error);
+    }
+  });
+
+  // Periodically check for unprocessed statuses
+  setInterval(() => {
+    if (statusQueue.length > 0 && !isProcessing) {
+      processStatusQueue();
+    }
+  }, 5000);
+
+  console.log("Enhanced status reading system with queue activated ✅");
+}
