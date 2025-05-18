@@ -1,4 +1,4 @@
-name: Unzip File
+name: Unzip and Commit
 
 on:
   push:
@@ -6,14 +6,25 @@ on:
       - main
 
 jobs:
-  unzip:
+  unzip_and_commit:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Unzip BWM-XMD-QUANTUM-main.zip
+      - name: Unzip the archive
+        run: unzip -o BWM-XMD-QUANTUM-main.zip
+
+      - name: Configure Git
         run: |
-          mkdir -p unzipped
-          unzip BWM-XMD-QUANTUM-main.zip -d unzipped
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Commit and push unzipped content
+        run: |
+          git add .
+          git commit -m "Unzipped BWM-XMD-QUANTUM-main.zip"
+          git push
