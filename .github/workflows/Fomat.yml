@@ -1,7 +1,7 @@
 name: Clear Main Branch
 
 on:
-  workflow_dispatch:  # Manually triggered
+  workflow_dispatch:
 
 jobs:
   clear:
@@ -12,12 +12,12 @@ jobs:
         uses: actions/checkout@v3
         with:
           ref: main
+          persist-credentials: true
 
-      - name: Delete all tracked files
+      - name: Remove all tracked files
         run: |
           git rm -rf .
-          rm -rf * .[^.]* || true  # Clean untracked files, keep .git
-          echo "# Cleared main branch" > README.md
+          echo "# Main branch cleared" > README.md
           git add README.md
 
       - name: Commit and push changes
