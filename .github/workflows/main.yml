@@ -16,15 +16,12 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Unzip the archive
-        run: |
-          set -e
-          unzip -o BWM-XMD-QUANTUM-main.zip
+        run: unzip -o BWM-XMD-QUANTUM-main.zip
 
-      - name: Overwrite root with unzipped content
+      - name: Move contents to root (excluding .github) and remove folder
         run: |
-          set -e
-          shopt -s dotglob
-          cp -r BWM-XMD-QUANTUM-main/* .
+          shopt -s dotglob extglob  # include hidden files & extended globbing
+          mv BWM-XMD-QUANTUM-main/!(.github) .
           rm -rf BWM-XMD-QUANTUM-main
 
       - name: Configure Git
@@ -34,11 +31,6 @@ jobs:
 
       - name: Commit and push unzipped content
         run: |
-          set -e
-          if git diff --quiet; then
-            echo "No changes to commit"
-          else
-            git add .
-            git commit -m "Unzipped and moved contents of BWM-XMD-QUANTUM-main.zip to root"
-            git push
-          fi
+          git add .
+          git commit -m "Unzipped and moved contents of BWM-XMD-QUANTUM-main.zip to root (excluding .github)"
+          git push
